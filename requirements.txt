@@ -5,5 +5,5 @@ langchain_community
 pdfplumber
 chromadb
 streamlit
-pdfpy
+pypdf
 pysqlite3-binary
