@@ -7,3 +7,4 @@ chromadb
 streamlit
 pypdf
 pysqlite3-binary
+streamlit-extras
