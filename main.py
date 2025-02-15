@@ -1,9 +1,9 @@
 # from dotenv import load_dotenv
 # load_dotenv()
 
-__import__('pysqlite3')
-import sys
-sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+# __import__('pysqlite3')
+# import sys
+# sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.vectorstores import Chroma
@@ -15,7 +15,19 @@ import streamlit as st
 import tempfile
 import os
 from streamlit_extras.buy_me_a_coffee import button
+from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+
 button(username="lian220", floating=True, width=221)
+
+#Stream 받아 줄 Hander 만들기
+from langchain.callbacks.base import BaseCallbackHandler
+class StreamHandler(BaseCallbackHandler):
+    def __init__(self, container, initial_text=""):
+        self.container = container
+        self.text=initial_text
+    def on_llm_new_token(self, token: str, **kwargs) -> None:
+        self.text+=token
+        self.container.markdown(self.text)
 
 # 제목
 st.title("ChatPDF")
@@ -66,7 +78,8 @@ if uploaded_file is not None:
     if st.button("질문하기"):
         #Question
         with st.spinner("응답 하는 중...", show_time=True):
-            llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0, openai_api_key=openai_key)
+            chat_box = st.empty()
+            stream_hander = StreamHandler(chat_box)
+            llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0, openai_api_key=openai_key, streaming=True, callbacks=[stream_hander])
             qa_chain = RetrievalQA.from_chain_type(llm,retriever=db.as_retriever())
-            result = qa_chain({"query": question})
-            st.write(result["result"])
+            qa_chain({"query": question})
